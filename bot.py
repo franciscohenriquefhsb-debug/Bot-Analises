@@ -2,7 +2,7 @@ import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-TOKEN = "COLE_SEU_TOKEN_NOVO_AQUI"
+TOKEN = "8812760614:AAG_h8AuUKxRgGWNiMIXv8t2ifYJl9Ws3-s"
 CHAT_ID = -1003971306082
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
