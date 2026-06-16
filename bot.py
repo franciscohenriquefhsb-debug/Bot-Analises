@@ -10,7 +10,6 @@ API_KEY = os.getenv("API_KEY")
 HEADERS = {"x-apisports-key": API_KEY}
 
 def calc_over_prob(media_gols):
-    # Modelo Poisson pra estimar % de Over/Under
     def poisson(k, media):
         if media <= 0: return 0
         return (media**k * math.exp(-media)) / math.factorial(k)
@@ -124,4 +123,33 @@ async def jogos(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     continue
 
                 jogos_encontrados += 1
-                data_hora = jogo
+                data_hora = jogo['fixture']['date']
+                dia = data_hora[8:10] + "/" + data_hora[5:7]
+                hora = data_hora[11:16]
+
+                msg_final += f"🏆 {home['name']} x {away['name']} - {dia} {hora}\n"
+                msg_final += f"Média esperada: {media_esperada} gols\n"
+                msg_final += f"{home['name']} casa: {stats_home['casa_faz']:.2f} feitos | {stats_home['casa_sofre']:.2f} sofridos\n"
+                msg_final += f"{away['name']} fora: {stats_away['fora_faz']:.2f} feitos | {stats_away['fora_sofre']:.2f} sofridos\n"
+                msg_final += f"O2.5: {probs['o25']:.1f}% ✅ | U2.5: {probs['u25']:.1f}%\n"
+                msg_final += "───────────────\n"
+
+            except Exception:
+                continue
+
+        if jogos_encontrados == 0:
+            msg_final += "Nenhum jogo com Over 2.5 acima de 75% no período."
+
+        await update.message.reply_text(msg_final)
+
+    except Exception as e:
+        await update.message.reply_text("Erro ao buscar dados. Confere se API_KEY está certa no Railway.")
+
+def main():
+    app = ApplicationBuilder().token(TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("jogos", jogos))
+    app.run_polling()
+
+if __name__ == "__main__":
+    main()
