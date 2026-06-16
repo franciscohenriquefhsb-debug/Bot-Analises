@@ -79,12 +79,25 @@ async def jogos(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # API 1: worldcup26.ir - Grátis pra Copa 2026
             url = "https://worldcup26.ir/get/games"
             r = requests.get(url, timeout=15)
-            all_games = r.json()
+            response_data = r.json()
+
+            # Corrige formato da API - pode vir dict ou list
+            if isinstance(response_data, dict):
+                all_games = response_data.get("data", response_data.get("games", []))
+            else:
+                all_games = response_data
 
             # Filtra jogos futuros
             agora = datetime.now().timestamp() * 1000
-            fixtures = [g for g in all_games if g['timestamp'] > agora]
-            fixtures = sorted(fixtures, key=lambda x: x['timestamp'])[:5]
+            fixtures = []
+            for g in all_games:
+                try:
+                    if g.get('timestamp', 0) > agora:
+                        fixtures.append(g)
+                except:
+                    continue
+
+            fixtures = sorted(fixtures, key=lambda x: x.get('timestamp', 0))[:5]
 
             if not fixtures:
                 await update.message.reply_text("Nenhum jogo futuro da Copa encontrado.")
@@ -94,16 +107,15 @@ async def jogos(update: Update, context: ContextTypes.DEFAULT_TYPE):
             jogos_encontrados = 0
 
             for jogo in fixtures:
-                home = jogo['home_team']['name']
-                away = jogo['away_team']['name']
+                home = jogo.get('home_team', {}).get('name', 'Time Casa')
+                away = jogo.get('away_team', {}).get('name', 'Time Fora')
 
                 # worldcup26.ir não tem stats por time ainda
-                # Usa média histórica das Copas: 2.6 gols
                 media_esperada = 2.6
                 probs = calc_over_prob(media_esperada)
 
                 jogos_encontrados += 1
-                data = datetime.fromtimestamp(jogo['timestamp'] / 1000)
+                data = datetime.fromtimestamp(jogo.get('timestamp', 0) / 1000)
                 dia_hora = data.strftime("%d/%m %H:%M")
 
                 msg_final += f"🏆 {home} x {away} - {dia_hora}\n"
