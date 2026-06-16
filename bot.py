@@ -76,48 +76,54 @@ async def jogos(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         if liga_code == "COPA":
-            # API 1: worldcup26.ir - Grátis pra Copa 2026
             url = "https://worldcup26.ir/get/games"
             r = requests.get(url, timeout=15)
             response_data = r.json()
 
-            # Corrige formato da API - pode vir dict ou list
             if isinstance(response_data, dict):
                 all_games = response_data.get("data", response_data.get("games", []))
             else:
                 all_games = response_data
 
-            # Filtra jogos futuros
+            print(f"Total de jogos da API: {len(all_games)}")
+
             agora = datetime.now().timestamp() * 1000
             fixtures = []
             for g in all_games:
                 try:
-                    if g.get('timestamp', 0) > agora:
+                    ts = g.get('timestamp', 0)
+                    if ts > agora or ts == 0:
                         fixtures.append(g)
                 except:
                     continue
 
+            if not fixtures and all_games:
+                fixtures = all_games[:5]
+
             fixtures = sorted(fixtures, key=lambda x: x.get('timestamp', 0))[:5]
 
             if not fixtures:
-                await update.message.reply_text("Nenhum jogo futuro da Copa encontrado.")
+                await update.message.reply_text("API da Copa não retornou jogos. Ainda sem tabela definida.")
                 return
 
             msg_final = "📊 ANÁLISES - COPA 2026\n\n"
             jogos_encontrados = 0
 
             for jogo in fixtures:
-                home = jogo.get('home_team', {}).get('name', 'Time Casa')
-                away = jogo.get('away_team', {}).get('name', 'Time Fora')
+                home = jogo.get('home_team', {}).get('name', 'A definir')
+                away = jogo.get('away_team', {}).get('name', 'A definir')
 
-                # worldcup26.ir não tem stats por time ainda
+                ts = jogo.get('timestamp', 0)
+                if ts > 0:
+                    data = datetime.fromtimestamp(ts / 1000)
+                    dia_hora = data.strftime("%d/%m %H:%M")
+                else:
+                    dia_hora = "Data a definir"
+
                 media_esperada = 2.6
                 probs = calc_over_prob(media_esperada)
 
                 jogos_encontrados += 1
-                data = datetime.fromtimestamp(jogo.get('timestamp', 0) / 1000)
-                dia_hora = data.strftime("%d/%m %H:%M")
-
                 msg_final += f"🏆 {home} x {away} - {dia_hora}\n"
                 msg_final += f"Média Copa: {media_esperada} gols\n"
                 msg_final += f"O2.5: {probs['o25']:.1f}% | U2.5: {probs['u25']:.1f}%\n"
@@ -127,7 +133,6 @@ async def jogos(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 msg_final += "Nenhum jogo encontrado."
 
         else:
-            # API 2: API-Football pras outras ligas
             ligas = {
                 "BR1": 71, "PL": 39, "SA": 135, "LL": 140, "BL1": 78, "L1": 61,
                 "LIBERTA": 13, "SULA": 11, "COPABR": 73
