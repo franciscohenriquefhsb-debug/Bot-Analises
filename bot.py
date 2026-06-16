@@ -5,8 +5,8 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 TOKEN = os.getenv("TOKEN") or "8812760614:AAG_h8AuUKxRgGWNiMIXv8t2ifYJl9Ws3-s""
-API_KEY = os.getenv("API_KEY") or "COLE_SUA_KEY_DA_API_FOOTBALL_AQUI"
-HEADERS = {"x-apisports-key": API_KEY}
+API_KEY = os.getenv("API_KEY") or "fa7e7bf07549d3f97b94440154229784"
+HEADERS = {"x-apisports-key": fa7e7bf07549d3f97b94440154229784}
 
 def calc_over_prob(media_gols):
     # Modelo Poisson simples pra estimar %
